@@ -2,6 +2,15 @@
 
 var _undefined
 
+/**
+ * Map a object to another using the passed map
+ * @param src
+ * @param [dest]
+ * @param [map]
+ * @returns {*}
+ * @constructor
+ */
+
 function ObjectMapper(src, dest, map)
 {
   // There are two different constructors - move around properties if needed
@@ -271,7 +280,7 @@ function update_arr(dest, key, data, keys, context)
   if (key.add) {
     if (data !== null && typeof data !== 'undefined') {
       dest = dest || []
-      dest.push(data)
+      dest.push(applyTransform(data,dest,context))
       // dest = dest.concat(data)
     }
     return dest
@@ -279,7 +288,7 @@ function update_arr(dest, key, data, keys, context)
 
   // Just update a single array node
   if (key.ix !== '') {
-    return update_arr_ix(dest, key.ix, data, keys, context)
+    return update_arr_ix(dest, key.ix, applyTransform(data,dest,context), keys, context)
   }
 
   // If the data is in an array format then make sure that there is a dest index for each data index
@@ -289,7 +298,7 @@ function update_arr(dest, key, data, keys, context)
     dest = data.reduce(function(dest,d,i) {
       // If the instruction is to update all array indices ('') or the current index, update the child data element.  Otherwise, don't bother
       if (key.ix == '' || key.ix == i) {
-        return update_arr_ix(dest, i, d, keys.slice(), context)
+        return update_arr_ix(dest, i, applyTransform(d,dest,context), keys.slice(), context)
       }
     }, dest)
 
@@ -299,6 +308,14 @@ function update_arr(dest, key, data, keys, context)
   // Set the specific array index with the data
   else 
     return update_arr_ix(dest, '0', data, keys, context)
+}
+
+function applyTransform(data, dest, context){
+  if (typeof context.transform == 'function') {
+    return context.transform(data, context.src, dest, context.srckey, context.destkey)
+  }else{
+    return data;
+  }
 }
 
 function update_arr_ix(dest, ix, data, keys, context)
